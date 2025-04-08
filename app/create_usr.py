@@ -1,5 +1,5 @@
 from main import app
-from db import db
+from database.db import db
 from models.user import User
 import bcrypt
 

@@ -1,8 +1,19 @@
 from flask import Blueprint, request, jsonify, session
-from services.auth_service import login_user
+import bcrypt
 from models.user import User
 
 auth_bp = Blueprint('auth', __name__)
+
+def login_user(username, password):
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return None, "Người dùng không tồn tại"
+    
+    # So sánh mật khẩu nhập vào với mật khẩu đã băm
+    if bcrypt.checkpw(password.encode(), user.password_hash.encode()):
+        return {"id": user.id}, None
+    else:
+        return None, "Sai mật khẩu"
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -17,7 +28,9 @@ def login():
     if error:
         return jsonify({"error": error}), 401
     
+    
     session['user_id'] = user["id"]
+    print({"id": user["id"]})
     return jsonify({"id": user["id"]}), 200
 
 

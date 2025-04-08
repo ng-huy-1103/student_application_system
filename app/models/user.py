@@ -1,5 +1,5 @@
 from datetime import datetime
-from db import db
+from database.db import db
 import enum
 
 class UserRole(enum.Enum):
@@ -14,4 +14,4 @@ class User(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.Enum(UserRole), nullable=False, default=UserRole.teacher)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
