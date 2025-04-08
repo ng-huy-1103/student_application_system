@@ -59,7 +59,7 @@ def upload():
     except Exception as e:
         db.session.rollback()
         flash(f'Error creating application: {str(e)}', 'error')
-        return jsonify({f'error': {str(e)}}), 500
+        return jsonify({'error': str(e)}), 500
     finally:
         db.session.close()
     
@@ -104,7 +104,7 @@ def upload():
             except Exception as e:
                 db.session.rollback()
                 flash(f'Error saving document: {str(e)}', 'error')
-                return jsonify({f'error': {str(e)}}), 500
+                return jsonify({'error': str(e)}), 500
             finally:
                 db.session.close()
     

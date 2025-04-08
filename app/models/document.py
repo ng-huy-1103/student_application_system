@@ -42,3 +42,4 @@ class Document(db.Model):
 
     def __repr__(self):
         return f"<Document(id={self.id}, document_type={self.document_type})>"
+    

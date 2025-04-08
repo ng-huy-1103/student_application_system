@@ -30,3 +30,12 @@ class Application(db.Model):
 
     def __repr__(self):
         return f"<Application(id={self.id}, status={self.status})>"
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "submission_date": self.submission_date.isoformat() if self.submission_date else None,
+            "status": self.status,
+            "evaluation_score": self.evaluation_score,
+            "evaluation_date": self.evaluation_date.isoformat() if self.evaluation_date else None
+        }

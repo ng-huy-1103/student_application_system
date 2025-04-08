@@ -25,3 +25,17 @@ class StudentInfo(db.Model):
 
     def __repr__(self):
         return f"<StudentInfo(id={self.id}, name={self.name})>"
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "application_id": self.application_id,
+            "name": self.name,
+            "gender": self.gender,
+            "date_of_birth": self.date_of_birth,
+            "age": self.age,
+            "nationality": self.nationality,
+            "previous_university": self.previous_university,
+            "gpa": self.gpa,
+            "russian_language_level": self.russian_language_level
+        }

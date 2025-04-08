@@ -22,3 +22,14 @@ class Summary(db.Model):
 
     def __repr__(self):
         return f"<Summary(id={self.id}, application_id={self.application_id})>"
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "application_id": self.submission_date.isoformat() if self.submission_date else None,
+            "cv_summary": self.status,
+            "motivation_letter_summary": self.motivation_letter_summary,
+            "recommendation_letter_summary": self.recommendation_letter_summary,
+            "recommendation_author": self.recommendation_author,
+            "evaluation_comments": self.evaluation_comments
+        }
