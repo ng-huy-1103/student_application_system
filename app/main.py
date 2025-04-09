@@ -9,6 +9,7 @@ from models.application import Application
 from models.user import User
 from models.studentinfo import StudentInfo
 from models.summary import Summary
+from models.evaluation import Evaluation
 
 
 app = Flask(__name__)

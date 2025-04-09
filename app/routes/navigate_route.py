@@ -68,7 +68,7 @@ def get_applications():
 
 @navigate_bp.route('/application/<int:application_id>')
 def application(application_id):
-    """Display application details and status."""
+    """Get application details and status."""
     session = db.session
     try:
         # Get application

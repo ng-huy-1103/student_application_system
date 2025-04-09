@@ -7,13 +7,13 @@ auth_bp = Blueprint('auth', __name__)
 def login_user(username, password):
     user = User.query.filter_by(username=username).first()
     if not user:
-        return None, "Người dùng không tồn tại"
+        return None, "User not found"
     
     # So sánh mật khẩu nhập vào với mật khẩu đã băm
     if bcrypt.checkpw(password.encode(), user.password_hash.encode()):
         return {"id": user.id}, None
     else:
-        return None, "Sai mật khẩu"
+        return None, "Wrong password"
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -22,7 +22,7 @@ def login():
     password = data.get('password')
     
     if not username or not password:
-        return jsonify({"error": "Thiếu username hoặc password"}), 400
+        return jsonify({"error": "Not enough fields"}), 400
         
     user, error = login_user(username, password)
     if error:
@@ -38,18 +38,18 @@ def login():
 def logout():
     # Xóa thông tin phiên của người dùng
     session.pop('user_id', None)
-    return jsonify({"message": "Đăng xuất thành công"}), 200
+    return jsonify({"message": "Logout successfully"}), 200
 
 @auth_bp.route('/user', methods=['GET'])
 def current_user():
     # Lấy id người dùng từ session
     user_id = session.get('user_id')
     if not user_id:
-        return jsonify({"error": "Không có người dùng đăng nhập"}), 401
+        return jsonify({"error": "Not login yet"}), 401
     
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "Người dùng không tồn tại"}), 404
+        return jsonify({"error": "User not found"}), 404
 
     user_info = {
         "id": user.id,
@@ -59,3 +59,4 @@ def current_user():
         "created_at": user.created_at.isoformat()
     }
     return jsonify(user_info), 200
+

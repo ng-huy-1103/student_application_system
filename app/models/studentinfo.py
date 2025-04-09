@@ -3,7 +3,6 @@ from sqlalchemy import Column, Integer, String, Float, Text, DateTime, ForeignKe
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
-import enum
 
 class StudentInfo(db.Model):
     """StudentInfo model containing extracted student information."""
