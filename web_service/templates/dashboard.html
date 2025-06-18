@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Student Application System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Student Application System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user %}
+                    <li class="nav-item">
+                        <span class="navbar-text me-2">Welcome, {{ current_user.username }}!</span>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    {% if current_user %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('history') }}">History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                    </li>
+                    {% if current_user.is_admin() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_users') }}">Manage Users</a>
+                    </li>
+                    {% endif %}
+                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <h1 class="mb-4">Dashboard</h1>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Reviewers' Decisions</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Student Name</th>
+                                        {% for rev in reviewers %}
+                                            <!-- <th>Decision of {{ rev.username }}</th> -->
+                                            <th>Score of {{ rev.username }}</th>
+                                            <th>Comment of {{ rev.username }}</th>
+                                        {% endfor %}
+                                        <th>Avg Reviewer Score</th>
+                                        <th>Final Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in table_rows %}
+                                    <tr>
+                                        <td>{{ row.id }}</td>
+                                        <td>{{ row.student_name }}</td>
+                                        {% for idx in range(reviewers|length) %}
+                                            <!-- <td class="text-center">{{ row['decision'~(idx+1)] }}</td> -->
+                                            <td class="text-center">{{ row['score'~(idx+1)] }}</td>
+                                            <td>{{ row['comment'~(idx+1)] }}</td>
+                                        {% endfor %}
+                                        <td class="text-center">
+                                            {% if row.avg_reviewer_score %}
+                                                {{ "%.1f"|format(row.avg_reviewer_score) }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">{{ row.final_status.replace('_',' ').title() }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Applications</h5>
+                        <p class="card-text display-4">{{ total_applications if total_applications is defined else 0 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Approved</h5>
+                        <p class="card-text display-4">{{ approved_applications if approved_applications is defined else 0 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-danger">
+                    <div class="card-body">
+                        <h5 class="card-title">Rejected</h5>
+                        <p class="card-text display-4">{{ rejected_applications if rejected_applications is defined else 0 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">Pending</h5>
+                        <p class="card-text display-4">{{ pending_applications if pending_applications is defined else 0 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title">Invited to interview</h5>
+                        <p class="card-text display-4">{{ invited_applications if invited_applications is defined else 0 }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Application Status</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Average Score: {{ "%.2f"|format(avg_score if avg_score is defined else 0.0) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Application Status Chart
+            const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+            if (statusCtx) {
+                const statusChart = new Chart(statusCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Approved', 'Rejected', 'Pending', 'Invited to interview'],
+                        datasets: [{
+                            data: [{{ approved_applications if approved_applications is defined else 0 }}, {{ rejected_applications if rejected_applications is defined else 0 }}, {{ pending_applications if pending_applications is defined else 0 }}, {{ invited_applications if invited_applications is defined else 0 }}],
+                            backgroundColor: [
+                                'rgba(40, 167, 69, 0.8)',
+                                'rgba(220, 53, 69, 0.8)',
+                                'rgba(255, 193, 7, 0.8)',
+                                'rgba(159, 166, 178, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(40, 167, 69, 1)',
+                                'rgba(220, 53, 69, 1)',
+                                'rgba(255, 193, 7, 1)',
+                                'rgba(159, 166, 178, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Application Status Distribution'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Score Chart
+            const scoreCtx = document.getElementById('scoreChart')?.getContext('2d');
+            if (scoreCtx) {
+                const scoreChart = new Chart(scoreCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Average Score'],
+                        datasets: [{
+                            label: 'Score',
+                            data: [{{ avg_score if avg_score is defined else 0.0 }}],
+                            backgroundColor: 'rgba(13, 110, 253, 0.8)',
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Average Evaluation Score'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Language Levels Chart
+            const languageCtx = document.getElementById('languageChart')?.getContext('2d');
+            const languageLevelsData = {{ language_levels | tojson | safe if language_levels is defined else {} }};
+            if (languageCtx && Object.keys(languageLevelsData).length > 0) {
+                const languageChart = new Chart(languageCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(languageLevelsData),
+                        datasets: [{
+                            data: Object.values(languageLevelsData),
+                            backgroundColor: [
+                                'rgba(13, 110, 253, 0.8)',
+                                'rgba(40, 167, 69, 0.8)',
+                                'rgba(220, 53, 69, 0.8)',
+                                'rgba(255, 193, 7, 0.8)',
+                                'rgba(111, 66, 193, 0.8)',
+                                'rgba(23, 162, 184, 0.8)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Russian Language Level Distribution'
+                            }
+                        }
+                    }
+                });
+            } else if (languageCtx) {
+                 languageCtx.canvas.parentNode.innerHTML = "<p class='text-center text-muted'>No language level data available.</p>";
+            }
+
+            // Nationality Chart
+            const nationalityCtx = document.getElementById('nationalityChart')?.getContext('2d');
+            const nationalitiesData = {{ nationalities | tojson | safe if nationalities is defined else {} }};
+            if (nationalityCtx && Object.keys(nationalitiesData).length > 0) {
+                const nationalityChart = new Chart(nationalityCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(nationalitiesData),
+                        datasets: [{
+                            label: 'Number of Students',
+                            data: Object.values(nationalitiesData),
+                            backgroundColor: 'rgba(23, 162, 184, 0.8)',
+                            borderColor: 'rgba(23, 162, 184, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 } 
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Student Nationality Distribution'
+                            }
+                        }
+                    }
+                });
+            } else if (nationalityCtx) {
+                nationalityCtx.canvas.parentNode.innerHTML = "<p class='text-center text-muted'>No nationality data available.</p>";
+            }
+        });
+    </script>
+</body>
+</html>
+

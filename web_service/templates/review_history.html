@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Reviewer Feedback History - {{ application.student_name }}</h2>
+
+  {% if evaluations %}
+  <table class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th>Reviewer</th>
+        <th>Decision</th>
+        <th>Comments</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for review in evaluations %}
+      <tr>
+        <td>{{ review.reviewer.first_name }} {{ review.reviewer.last_name }}</td>
+        <td>{{ review.decision }}</td>
+        <td>{{ review.comments or "No comment" }}</td>
+        <td>{{ review.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No reviews available for this application.</p>
+  {% endif %}
+
+  <a href="{{ url_for('application', application_id=application.id) }}" class="btn btn-secondary mt-3">Back to Application</a>
+</div>
+{% endblock %}

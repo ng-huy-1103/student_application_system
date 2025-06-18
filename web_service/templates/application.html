@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application #{{ application.id }} - {{ application.student_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Student Application System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user %}
+                    <li class="nav-item">
+                        <span class="navbar-text me-2">Welcome, {{ current_user.username }}!</span>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    {% if current_user %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('upload') }}">Upload</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('history') }}">History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                    </li>
+                    {% if current_user.is_admin() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_users') }}">Manage Users</a>
+                    </li>
+                    {% endif %}
+                     <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2>Application #{{ application.id }} - {{ application.student_name }}</h2>
+                <span class="badge bg-{{ 
+                    'success' if application.status == 'approved' else 
+                    'danger' if application.status == 'rejected' else 
+                    'primary' if application.status == 'evaluated' else 
+                    'warning' if application.status == 'processing' else 
+                    'info' if application.status == 'submitted' else 
+                    'secondary' 
+                }}">{{ application.status | title }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Submission Date:</strong> {{ application.submission_date.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                         <p><strong>Uploaded by:</strong> {{ application.uploaded_by.username if application.uploaded_by else 'N/A' }}</p>
+                    </div>
+                </div>
+
+                <div class="mb-4 d-flex gap-2">
+                    {% if can_process %}
+                    <form method="POST" action="{{ url_for('process_documents', application_id=application.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-primary">Process Pending Documents</button>
+                    </form>
+                    {% endif %}
+
+                    {% if can_analyze %}
+                    <form method="POST" action="{{ url_for('analyze_application', application_id=application.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-info">Analyze Application (LLM)</button>
+                    </form>
+                    {% endif %}
+                </div>
+
+
+                {% if documents %}
+                <h3 class="mt-4">Uploaded Documents</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Document Type</th>
+                                <th>File Name</th>
+                                <th>Upload Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in documents %}
+                            <tr>
+                                <td>{{ document_types.get(document.document_type, document.document_type | title) }}</td>
+                                <td>{{ document.file_name }}</td>
+                                <td>{{ document.upload_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 
+                                        'success' if document.processing_status == processing_status_enum.COMPLETED.value else 
+                                        'warning' if document.processing_status == processing_status_enum.PROCESSING.value else 
+                                        'danger' if document.processing_status == processing_status_enum.FAILED.value else 
+                                        'secondary' 
+                                    }}">{{ document.processing_status | title }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('view_document', document_id=document.id) }}" class="btn btn-sm btn-outline-primary" target="_blank">View</a>
+                                    <a href="{{ url_for('download_document', document_id=document.id) }}" class="btn btn-sm btn-outline-secondary">Download</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                 <p class="text-muted">No documents uploaded for this application yet.</p>
+                {% endif %}
+
+                {% if student_info %}
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Student Information</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h4>Passport information</h4>
+                                        <p><strong>Name:</strong> {{ student_info.name | default('N/A') }}</p>
+                                        <p><strong>Gender:</strong> {{ student_info.gender | default('N/A') }}</p>
+                                        <p><strong>Date of Birth:</strong> {{ student_info.date_of_birth | default('N/A') }}</p>
+                                        <p><strong>Age:</strong> {{ student_info.age | default('N/A') }}</p>
+                                        <p><strong>Nationality:</strong> {{ student_info.nationality | default('N/A') }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h4>Educational information</h4>
+                                        <p><strong>Previous University:</strong> {{ student_info.previous_university | default('N/A') }}</p>
+                                        <p><strong>GPA:</strong> {{ student_info.gpa | default('N/A') }}</p>
+                                        <p><strong>Russian Language Level:</strong> {{ student_info.russian_language_level | default('N/A') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% elif not can_analyze and not summary %}
+                    <p class="text-muted mt-3">Student information will be available after successful analysis.</p>
+                {% endif %}
+
+                {% if summary %}
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Document Summaries & AI Evaluation</h3>
+                            </div>
+                            <div class="card-body">
+                                {% if summary.cv_summary %}
+                                <div class="mb-4">
+                                    <h4>CV Summary</h4>
+                                    <p>{{ summary.cv_summary | default('N/A', True) }}</p>
+                                </div>
+                                <hr>
+                                {% endif %}
+
+                                {% if summary.motivation_letter_summary %}
+                                <div class="mb-4">
+                                    <h4>Motivation Letter Summary</h4>
+                                    <p>{{ summary.motivation_letter_summary | default('N/A', True) }}</p>
+                                </div>
+                                <hr>
+                                {% endif %}
+
+                                {% if summary.recommendation_letter_summary %}
+                                <div class="mb-4">
+                                    <h4>Recommendation Letter</h4>
+                                    <p><strong>Author:</strong> {{ summary.recommendation_author | default('N/A', True) }}</p>
+                                    <p>{{ summary.recommendation_letter_summary | default('N/A', True) }}</p>
+                                </div>
+                                <hr>
+                                {% endif %}
+
+                                {% if summary.achievements_summary %}
+                                <div class="mb-4">
+                                    <h4>Personal Achievements</h4>
+                                    <p>{{ summary.achievements_summary | default('N/A', True) }}</p>
+                                </div>
+                                <hr>
+                                {% endif %}
+
+                                {% if summary.additional_documents_summary %}
+                                <div class="mb-4">
+                                    <h4>Additional Documents</h4>
+                                    <p>{{ summary.additional_documents_summary | default('N/A', True) }}</p>
+                                </div>
+                                <hr>
+                                {% endif %}
+
+                                {% if summary.evaluation_comments %}
+                                <div class="mb-4">
+                                    <h4>AI Evaluation</h4>
+                                    <p>{{ summary.evaluation_comments | default('N/A', True) }}</p>
+                                </div>
+                                {% endif %}
+                                {% if application.evaluation_score is not none %}
+                                <div class="mb-4">
+                                        <h4>AI Evaluation Score:</h4>
+                                        <p>{{ application.evaluation_score | default('N/A', True) }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% elif not can_analyze and not student_info %}
+                    <p class="text-muted mt-3">Document summaries and AI evaluation will be available after successful analysis.</p>
+                {% endif %}
+
+                {% if summary and current_user.is_reviewer() %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5>Submit Your Review</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="review-form" data-application-id="{{ application.id }}">
+                            <div class="form-group">
+                                <label for="decision">Decision</label>
+                                <select class="form-control" id="decision" name="decision" required>
+                                <option value="" disabled selected>Select your decision</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="invited">Invited to interview</option>
+                                </select>
+                            </div>
+                            <div class="form-group mt-2">
+                                <label for="score">Score (0-100)</label>
+                                <input type="number" class="form-control" id="score" name="score" min="0" max="100" placeholder="Enter score from 0 to 100">
+                            </div>
+                            <div class="form-group mt-2">
+                                <label for="comments">Comments</label>
+                                <textarea class="form-control" id="comments" name="comments" rows="3" placeholder="Enter your comments (optional)"></textarea>
+                            </div>
+                        <button type="submit" class="btn btn-primary mt-3">Submit Review</button>
+                        </form>
+
+                        <div id="review-message" class="mt-3"></div>
+                    </div>
+                </div>
+
+                {% elif summary and not current_user.is_reviewer() %}
+                 <div class="alert alert-warning mt-4">Evaluation can only be performed by users with Reviewer roles.</div>
+                {% elif not summary and current_user.is_reviewer() %}
+                 <div class="alert alert-info mt-4">Evaluation form will be available after the application has been analyzed by the LLM.</div>
+                {% endif %}
+                
+                <div class="card mt-4">
+                <div class="card-header">
+                    <h5>Reviewer Feedback History</h5>
+                </div>
+                <div class="card-body">
+                    {% if evaluations %}
+                    <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                        <th>Reviewer</th>
+                        <th>Decision</th>
+                        <th>Score</th>
+                        <th>Comments</th>
+                        <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for review in evaluations %}
+                        <tr>
+                        <td>{{ review.reviewer.first_name }} {{ review.reviewer.last_name }}</td>
+                        <td>{{ review.decision }}</td>
+                        <td>{{ review.score if review.score is not none else 'N/A' }}</td>
+                        <td>{{ review.comments or 'No comment' }}</td>
+                        <td>{{ review.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                    {% else %}
+                    <p>No reviews yet.</p>
+                    {% endif %}
+                </div>
+                </div>
+
+            </div> 
+        </div> 
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/review.js') }}"></script>
+</body>
+</html>
+

@@ -1,0 +1,115 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: none;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    font-weight: 600;
+}
+
+.jumbotron {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+    background-color: #fff;
+}
+
+.btn {
+    border-radius: 4px;
+}
+
+.language-toggle {
+    margin-bottom: 20px;
+}
+
+.summary-section {
+    margin-bottom: 30px;
+}
+
+.summary-section h4 {
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.document-card {
+    height: 100%;
+}
+
+.document-card .card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.document-card .upload-btn {
+    margin-top: auto;
+}
+
+.dashboard-card {
+    transition: transform 0.3s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.table-review {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.table-review thead th {
+  background-color: #007bff;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.table-review tbody td {
+  padding: 0.75rem;
+  vertical-align: middle;
+  border-top: 1px solid #dee2e6;
+}
+
+.table-review tbody tr:nth-child(odd) {
+  background-color: #f8f9fa;
+}
+
+.table-review tbody tr:hover {
+  background-color: #e9ecef;
+}
+
+.table-review td {
+  max-width: 200px;
+  white-space: normal;
+  word-wrap: break-word;
+}
